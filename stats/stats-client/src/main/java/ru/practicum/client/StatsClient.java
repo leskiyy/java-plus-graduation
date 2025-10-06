@@ -30,12 +30,12 @@ public class StatsClient {
     private final Random random = new Random();
 
     public void postHit(HitDto dto) {
-        restTemplate.postForEntity(url + "/hit", dto, Void.class);
+        restTemplate.postForEntity(getUrl() + "/hit", dto, Void.class);
     }
 
     public List<StatsDto> getStats(String start, String end, List<String> uris, boolean unique) throws RestClientException {
 
-        StringBuilder sb = new StringBuilder(url).append("/stats")
+        StringBuilder sb = new StringBuilder(getUrl()).append("/stats")
                 .append("?start=").append(start)
                 .append("&end=").append(end)
                 .append("&unique=").append(unique);
