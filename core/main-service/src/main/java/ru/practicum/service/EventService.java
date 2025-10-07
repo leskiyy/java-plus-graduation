@@ -26,9 +26,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Stream;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static ru.practicum.specification.EventSpecifications.eventAdminSearchParamSpec;
 import static ru.practicum.specification.EventSpecifications.eventPublicSearchParamSpec;
@@ -46,19 +46,11 @@ public class EventService {
     public List<EventShortDto> getUsersEvents(EventUserSearchParam params) {
         Page<Event> events = eventRepository.findByInitiatorId(params.getUserId(), params.getPageable());
 
-        List<Long> eventIds = events.stream().map(Event::getId).toList();
-        Map<Long, Long> views = getViews(eventIds);
-        Map<Long, Long> confirmedRequests = requestRepository.countRequestsByEventIdsAndStatus(eventIds,
-                RequestStatus.CONFIRMED);
-
-        return events.stream()
-                .map(event -> {
-                    EventShortDto shortDto = eventMapper.toShortDto(event);
-                    shortDto.setViews(views.get(event.getId()));
-                    shortDto.setConfirmedRequests(confirmedRequests.get(event.getId()));
-                    return shortDto;
-                })
+        List<EventShortDto> result = events.stream()
+                .map(eventMapper::toShortDto)
                 .toList();
+        enrichWithStatsEventShortDto(result);
+        return result;
 
     }
 
@@ -74,44 +66,30 @@ public class EventService {
     public List<EventShortDto> searchEvents(PublicSearchParam param) {
 
         Page<Event> events = eventRepository.findAll(eventPublicSearchParamSpec(param), param.getPageable());
+        Map<Long, Event> eventsMap = events.stream().collect(toMap(Event::getId, Function.identity()));
 
-        List<Long> eventIds = events.stream()
-                .map(Event::getId)
-                .toList();
-        Map<Long, Long> views = getViews(eventIds);
-        Map<Long, Long> confirmed = requestRepository.countRequestsByEventIdsAndStatus(eventIds,
-                RequestStatus.CONFIRMED);
+        List<EventShortDto> eventShortDtos = events.stream()
+                .map(eventMapper::toShortDto)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        enrichWithStatsEventShortDto(eventShortDtos);
 
-        Stream<EventShortDto> eventShortDtoStream = events.stream()
-                .map(event -> {
-                    if (param.getOnlyAvailable() && confirmed.get(event.getId()) >= event.getParticipantLimit()) {
-                        return null;
-                    }
-                    EventShortDto dto = eventMapper.toShortDto(event);
-                    dto.setConfirmedRequests(confirmed.get(dto.getId()) == null ? 0 : confirmed.get(dto.getId()));
-                    dto.setViews(views.get(event.getId()) == null ? 0 : views.get(dto.getId()));
-                    return dto;
-                })
-                .filter(Objects::nonNull);
-        if (param.getSort() == SortSearchParam.VIEWS) {
-            return eventShortDtoStream
-                    .sorted(Comparator.comparingLong(EventShortDto::getViews))
-                    .toList();
-        } else {
-            return eventShortDtoStream
-                    .toList();
+        if (param.getOnlyAvailable()) {
+            eventShortDtos = eventShortDtos.stream()
+                    .filter(dto -> dto.getConfirmedRequests() >= eventsMap.get(dto.getId()).getParticipantLimit())
+                    .collect(Collectors.toList());
         }
+        if (param.getSort() == SortSearchParam.VIEWS) {
+            eventShortDtos.sort(Comparator.comparingLong(EventShortDto::getViews));
+        }
+        return eventShortDtos;
     }
 
     public EventFullDto getEventById(Long id) {
         Event event = eventRepository.findByIdAndState(id, EventState.PUBLISHED)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено или не опубликовано"));
-        Map<Long, Long> confirmed = requestRepository.countRequestsByEventIdsAndStatus(List.of(event.getId()), RequestStatus.CONFIRMED);
-        Map<Long, Long> views = getViews(List.of(event.getId()));
-
         EventFullDto dto = eventMapper.toFullDto(event);
-        dto.setConfirmedRequests(confirmed.get(dto.getId()));
-        dto.setViews(views.get(dto.getId()));
+        enrichWithStats(dto);
         return dto;
     }
 
@@ -121,12 +99,9 @@ public class EventService {
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new ConflictException("Событие добавленно не теущем пользователем");
         }
-        Map<Long, Long> confirmed = requestRepository.countRequestsByEventIdsAndStatus(List.of(event.getId()), RequestStatus.CONFIRMED);
-        Map<Long, Long> views = getViews(List.of(event.getId()));
 
         EventFullDto dto = eventMapper.toFullDto(event);
-        dto.setConfirmedRequests(confirmed.get(dto.getId()));
-        dto.setViews(views.get(dto.getId()));
+        enrichWithStats(dto);
         return dto;
     }
 
@@ -144,37 +119,23 @@ public class EventService {
         } else if (event.getStateAction() == UserEventAction.SEND_TO_REVIEW) {
             eventToUpdate.setState(EventState.PENDING);
         }
+
         Event updated = eventRepository.save(eventToUpdate);
 
-        Map<Long, Long> confirmed = requestRepository.countRequestsByEventIdsAndStatus(List.of(eventId), RequestStatus.CONFIRMED);
-        Map<Long, Long> views = getViews(List.of(eventId));
-
         EventFullDto result = eventMapper.toFullDto(updated);
-        result.setConfirmedRequests(confirmed.get(eventId));
-        result.setViews(views.get(eventId));
+        enrichWithStats(result);
         return result;
     }
 
     public List<EventFullDto> getEventsByParams(EventAdminSearchParam params) {
         Page<Event> searched = eventRepository.findAll(eventAdminSearchParamSpec(params), params.getPageable());
 
-        List<Long> eventIds = searched.stream()
+        List<EventFullDto> result = searched.stream()
                 .limit(params.getSize())
-                .map(Event::getId)
+                .map(eventMapper::toFullDto)
                 .toList();
-
-        Map<Long, Long> views = getViews(eventIds);
-        Map<Long, Long> confirmed = requestRepository.countRequestsByEventIdsAndStatus(eventIds,
-                RequestStatus.CONFIRMED);
-        return searched.stream()
-                .limit(params.getSize())
-                .map(event -> {
-                    EventFullDto dto = eventMapper.toFullDto(event);
-                    dto.setConfirmedRequests(confirmed.get(dto.getId()) == null ? 0 : confirmed.get(dto.getId()));
-                    dto.setViews(views.get(event.getId()) == null ? 0 : views.get(event.getId()));
-                    return dto;
-                })
-                .collect(toList());
+        enrichWithStatsEventFullDto(result);
+        return result;
     }
 
     @Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -195,15 +156,40 @@ public class EventService {
         Event updated = eventRepository.save(event);
 
         EventFullDto dto = eventMapper.toFullDto(updated);
+        enrichWithStats(dto);
 
+        return dto;
+    }
+
+    private void enrichWithStats(EventFullDto dto) {
+        Long eventId = dto.getId();
         Map<Long, Long> views = getViews(List.of(eventId));
         Map<Long, Long> confirmedRequests = requestRepository.countRequestsByEventIdsAndStatus(List.of(eventId),
                 RequestStatus.CONFIRMED);
-
         dto.setViews(views.get(eventId));
         dto.setConfirmedRequests(confirmedRequests.get(eventId));
+    }
 
-        return dto;
+    private void enrichWithStatsEventFullDto(List<EventFullDto> dtos) {
+        List<Long> ids = dtos.stream().map(EventFullDto::getId).toList();
+        Map<Long, Long> views = getViews(ids);
+        Map<Long, Long> confirmedRequests = requestRepository.countRequestsByEventIdsAndStatus(ids,
+                RequestStatus.CONFIRMED);
+        dtos.forEach(dto -> {
+            dto.setConfirmedRequests(confirmedRequests.get(dto.getId()) == null ? 0 : confirmedRequests.get(dto.getId()));
+            dto.setViews(views.get(dto.getId()) == null ? 0 : views.get(dto.getId()));
+        });
+    }
+
+    private void enrichWithStatsEventShortDto(List<EventShortDto> dtos) {
+        List<Long> ids = dtos.stream().map(EventShortDto::getId).toList();
+        Map<Long, Long> views = getViews(ids);
+        Map<Long, Long> confirmedRequests = requestRepository.countRequestsByEventIdsAndStatus(ids,
+                RequestStatus.CONFIRMED);
+        dtos.forEach(dto -> {
+            dto.setConfirmedRequests(confirmedRequests.get(dto.getId()) == null ? 0 : confirmedRequests.get(dto.getId()));
+            dto.setViews(views.get(dto.getId()) == null ? 0 : views.get(dto.getId()));
+        });
     }
 
     private void updateNouNullFields(Event eventToUpdate, UpdateEventRequest event) {
