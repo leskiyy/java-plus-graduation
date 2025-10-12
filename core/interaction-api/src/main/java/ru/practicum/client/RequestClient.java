@@ -1,7 +1,6 @@
 package ru.practicum.client;
 
 import feign.FeignException;
-import jakarta.validation.constraints.Positive;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.request.EventRequestStatusUpdateRequest;
@@ -20,12 +19,14 @@ public interface RequestClient {
                                                        @RequestBody EventRequestStatusUpdateRequest updateRequest) throws FeignException;
 
     @GetMapping("/{eventId}/users/{userId}")
-    List<ParticipationRequestDto> getUsersRequests(@PathVariable Long userId, @PathVariable Long eventId) throws FeignException;;
+    List<ParticipationRequestDto> getUsersRequests(@PathVariable Long userId, @PathVariable Long eventId) throws FeignException;
+
+    ;
 
     @PostMapping("/count")
     Map<Long, Long> countRequestsByEventIdsAndStatus(@RequestBody List<Long> ids, @RequestParam RequestStatus status) throws FeignException;
 
     @GetMapping("/{eventId}/users/{userId}/exists")
     boolean existsByRequesterAndEventAndStatus(@PathVariable Long userId, @PathVariable Long eventId,
-                                               @RequestParam RequestStatus status);
+                                               @RequestParam RequestStatus status) throws FeignException;
 }

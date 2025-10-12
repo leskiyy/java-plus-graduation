@@ -1,14 +1,13 @@
 package ru.practicum.controller.privateAPI;
 
-import feign.FeignException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.aop.ClientErrorHandler;
 import ru.practicum.client.RequestClient;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
@@ -17,9 +16,6 @@ import ru.practicum.dto.event.UpdateEventUserRequest;
 import ru.practicum.dto.request.EventRequestStatusUpdateRequest;
 import ru.practicum.dto.request.EventRequestStatusUpdateResult;
 import ru.practicum.dto.request.ParticipationRequestDto;
-import ru.practicum.exception.ConflictException;
-import ru.practicum.exception.ForbiddenException;
-import ru.practicum.exception.NotFoundException;
 import ru.practicum.parameters.EventUserSearchParam;
 import ru.practicum.service.EventService;
 
@@ -78,22 +74,13 @@ public class PrivateEventController {
         return requestForEventByUserId;
     }
 
+    @ClientErrorHandler
     @PatchMapping("/{eventId}/requests")
     public EventRequestStatusUpdateResult updateUsersRequests(@PathVariable @Positive Long userId,
                                                               @PathVariable @Positive Long eventId,
-                                                              @RequestBody EventRequestStatusUpdateRequest updateRequest) throws BadRequestException {
+                                                              @RequestBody EventRequestStatusUpdateRequest updateRequest) {
         log.info("Updating requests by userId={} for eventId={}", userId, eventId);
-        try {
-            return requestClient.updateUsersRequests(userId, eventId, updateRequest);
-        } catch (FeignException e) {
-            int status = e.status();
-            switch (status) {
-                case 400 -> throw new BadRequestException(e.getMessage());
-                case 403 -> throw new ForbiddenException(e.getMessage());
-                case 404 -> throw new NotFoundException(e.getMessage());
-                case 409 -> throw new ConflictException(e.getMessage());
-                default -> throw e;
-            }
-        }
+        return requestClient.updateUsersRequests(userId, eventId, updateRequest);
+
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.aop.ClientErrorHandler;
 import ru.practicum.client.RequestClient;
 import ru.practicum.client.StatsClient;
 import ru.practicum.client.UserClient;
@@ -184,6 +185,7 @@ public class EventService {
         return eventMapper.toEventShotCommentDto(event);
     }
 
+    @ClientErrorHandler
     private void enrichWithStats(EventFullDto dto) {
         Long eventId = dto.getId();
         Map<Long, Long> views = getViews(List.of(eventId));
@@ -193,6 +195,7 @@ public class EventService {
         dto.setConfirmedRequests(confirmedRequests.get(eventId));
     }
 
+    @ClientErrorHandler
     private void enrichWithStatsEventFullDto(List<EventFullDto> dtos) {
         List<Long> ids = dtos.stream().map(EventFullDto::getId).toList();
         Map<Long, Long> views = getViews(ids);
@@ -204,6 +207,7 @@ public class EventService {
         });
     }
 
+    @ClientErrorHandler
     private void enrichWithStatsEventShortDto(List<EventShortDto> dtos) {
         List<Long> ids = dtos.stream().map(EventShortDto::getId).toList();
         Map<Long, Long> views = getViews(ids);

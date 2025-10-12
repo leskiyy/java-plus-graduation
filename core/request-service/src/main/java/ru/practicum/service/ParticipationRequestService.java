@@ -1,9 +1,9 @@
 package ru.practicum.service;
 
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.aop.ClientErrorHandler;
 import ru.practicum.client.EventClient;
 import ru.practicum.client.UserClient;
 import ru.practicum.dto.event.EventFullDto;
@@ -34,6 +34,7 @@ public class ParticipationRequestService {
 
     private final ParticipationRequestMapper requestMapper;
 
+    @ClientErrorHandler
     public List<ParticipationRequestDto> getRequestForEventByUserId(Long userId, Long eventId) {
         EventFullDto eventById = eventClient.getEventById(eventId);
         if (!Objects.equals(eventById.getInitiator().getId(), userId)) {
@@ -45,6 +46,7 @@ public class ParticipationRequestService {
                 .toList();
     }
 
+    @ClientErrorHandler
     public List<ParticipationRequestDto> getRequestsByUser(Long userId) {
         userClient.getUserById(userId);
         return requestRepository.findAllByRequester(userId)
@@ -54,6 +56,7 @@ public class ParticipationRequestService {
     }
 
     @Transactional
+    @ClientErrorHandler
     public ParticipationRequestDto createRequest(Long userId, Long eventId) {
         userClient.getUserById(userId);
 
@@ -87,6 +90,7 @@ public class ParticipationRequestService {
     }
 
     @Transactional
+    @ClientErrorHandler
     public EventRequestStatusUpdateResult updateRequests(Long userId,
                                                          Long eventId,
                                                          EventRequestStatusUpdateRequest updateRequest) {

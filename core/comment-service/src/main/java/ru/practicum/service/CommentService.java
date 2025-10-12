@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.aop.ClientErrorHandler;
 import ru.practicum.client.EventClient;
 import ru.practicum.client.RequestClient;
 import ru.practicum.client.UserClient;
@@ -39,6 +40,7 @@ public class CommentService {
     private final CommentMapper mapper;
 
     @Transactional
+    @ClientErrorHandler
     public CommentDto addComment(Long userId, Long eventId, CreateUpdateCommentDto dto) {
         EventFullDto event = eventClient.getEventById(eventId);
         if (event.getState() != EventState.PUBLISHED) {
@@ -68,6 +70,7 @@ public class CommentService {
     }
 
 
+    @ClientErrorHandler
     @Transactional
     public void addPreModeration(Long userId, Long eventId, PreModerationRequest preModerationDto) {
         EventFullDto event = eventClient.getEventById(eventId);
@@ -77,6 +80,7 @@ public class CommentService {
         preModerationRepository.updateForbiddenWords(eventId, preModerationDto.getForbiddenWords());
     }
 
+    @ClientErrorHandler
     @Transactional
     public CommentDto updateComment(Long userId, Long eventId, Long commentId, CreateUpdateCommentDto dto) {
         EventFullDto event = eventClient.getEventById(eventId);

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.aop.ClientErrorHandler;
 import ru.practicum.client.CommentClient;
 import ru.practicum.client.StatsClient;
 import ru.practicum.dto.HitDto;
@@ -101,6 +102,7 @@ public class EventController {
         return event;
     }
 
+    @ClientErrorHandler
     @GetMapping("/{eventId}/comments")
     public List<CommentWithUserDto> getCommentsByEventId(@PathVariable @Positive Long eventId,
                                                          @RequestParam(defaultValue = "0") Integer from,

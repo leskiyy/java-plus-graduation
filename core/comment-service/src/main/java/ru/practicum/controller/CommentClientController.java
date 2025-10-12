@@ -4,7 +4,6 @@ import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.client.CommentClient;
 import ru.practicum.dto.comment.CommentWithUserDto;
 import ru.practicum.parameters.PageableSearchParam;
 import ru.practicum.service.CommentService;

@@ -1,10 +1,11 @@
 package ru.practicum.mapper;
 
-import lombok.RequiredArgsConstructor;
+import org.mapstruct.AnnotateWith;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.springframework.beans.factory.annotation.Autowired;
+import ru.practicum.aop.ClientErrorHandler;
 import ru.practicum.client.EventClient;
 import ru.practicum.client.UserClient;
 import ru.practicum.dto.comment.CommentDto;
@@ -23,10 +24,12 @@ public abstract class CommentMapper {
     @Mapping(target = "author", source = "author")
     public abstract CommentDto toDto(Comment comment);
 
+    @AnnotateWith(ClientErrorHandler.class)
     @Mapping(target = "event", source = "event")
     @Mapping(target = "author", expression = "java(this.userClient.getUserShortDroById(comment.getAuthor()))")
     public abstract CommentWithUserDto toWithUserDto(Comment comment);
 
+    @AnnotateWith(ClientErrorHandler.class)
     @Mapping(target = "author", source = "author")
     @Mapping(target = "event", expression = "java(this.eventClient.getEventShotCommentDtoById(comment.getEvent()))")
     public abstract CommentWithEventDto toWithEventDto(Comment comment);

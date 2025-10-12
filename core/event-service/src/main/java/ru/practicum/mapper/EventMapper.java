@@ -2,6 +2,7 @@ package ru.practicum.mapper;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import ru.practicum.aop.ClientErrorHandler;
 import ru.practicum.client.UserClient;
 import ru.practicum.dto.event.*;
 import ru.practicum.entity.Category;
@@ -14,6 +15,7 @@ public class EventMapper {
     private final UserClient userClient;
     private final CategoryMapper categoryMapper;
 
+    @ClientErrorHandler
     public EventShortDto toShortDto(Event event) {
         return EventShortDto.builder()
                 .annotation(event.getAnnotation())
@@ -26,6 +28,7 @@ public class EventMapper {
                 .build();
     }
 
+    @ClientErrorHandler
     public EventFullDto toFullDto(Event event) {
         return EventFullDto.builder()
                 .annotation(event.getAnnotation())
