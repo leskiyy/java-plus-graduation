@@ -5,8 +5,6 @@ import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.ForbiddenException;
@@ -14,8 +12,6 @@ import ru.practicum.exception.NotFoundException;
 
 @Aspect
 @Component
-@RestController
-@Service
 public class ClientErrorHandlerAspect {
 
     @Pointcut("@annotation(ru.practicum.aop.ClientErrorHandler)")

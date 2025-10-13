@@ -23,7 +23,8 @@ public class CommentClientController {
                                                          @RequestParam(defaultValue = "0") Integer from,
                                                          @RequestParam(defaultValue = "10") Integer size) {
         PageableSearchParam param = PageableSearchParam.builder().size(size).from(from).build();
-        log.info("Returned comments to event id={}", eventId);
-        return commentService.getCommentsByEventId(eventId, param.getPageable());
+        List<CommentWithUserDto> commentsByEventId = commentService.getCommentsByEventId(eventId, param.getPageable());
+        log.info("Returned {} comments to event id={}", commentsByEventId.size(), eventId);
+        return commentsByEventId;
     }
 }
