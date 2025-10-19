@@ -209,7 +209,7 @@ public class EventService {
         List<RecommendedEventProto> ratings = analyzerClient.getInteractionsCount(InteractionsCountRequestProto.newBuilder()
                 .addAllEventId(List.of(dto.getId()))
                 .build());
-        dto.setRating(ratings.getFirst() == null ? 0. : ratings.getFirst().getScope());
+        dto.setRating(ratings.getFirst() == null ? 0. : ratings.getFirst().getScore());
         dto.setConfirmedRequests(confirmedRequests.get(eventId));
     }
 
@@ -257,7 +257,7 @@ public class EventService {
                         .addAllEventId(eventIds)
                         .build())
                 .stream()
-                .collect(toMap(RecommendedEventProto::getEventId, RecommendedEventProto::getScope));
+                .collect(toMap(RecommendedEventProto::getEventId, RecommendedEventProto::getScore));
 
     }
 }

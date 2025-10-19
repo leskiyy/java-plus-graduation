@@ -23,5 +23,5 @@ message InteractionsCountRequestProto {
 
 message RecommendedEventProto {
     int64 event_id = 1;
-    double scope = 2;
+    double score = 2;
 }

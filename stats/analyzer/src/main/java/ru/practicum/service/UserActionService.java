@@ -33,8 +33,13 @@ public class UserActionService {
         UserAction userAction = userActionRepository.findById(id)
                 .orElseGet(() -> UserAction.builder().id(id).build());
 
-        userAction.setUserScore(getScore(userActionAvro));
+        Double savedScore = userAction.getUserScore();
+        double newScore = getScore(userActionAvro);
+        double actualScope = savedScore == null ? newScore : newScore > savedScore ? newScore : savedScore;
+
+        userAction.setUserScore(actualScope);
         userAction.setTimestampAction(userActionAvro.getTimestamp());
+        userActionRepository.save(userAction);
     }
 
     private double getScore(UserActionAvro userActionAvro) {

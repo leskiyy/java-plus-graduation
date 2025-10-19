@@ -40,7 +40,7 @@ public class RecommendationsService {
                 .map(es -> RecommendedEventProto.newBuilder()
                         .setEventId(allUsersEvents.contains(es.getId().getFirstEvent()) ? es.getId().getSecondEvent()
                                 : es.getId().getFirstEvent())
-                        .setScope(es.getScore())
+                        .setScore(es.getScore())
                         .build())
                 .toList();
     }
@@ -64,7 +64,7 @@ public class RecommendationsService {
                 .limit(maxResult)
                 .map(entry -> RecommendedEventProto.newBuilder()
                         .setEventId(entry.getKey())
-                        .setScope(entry.getValue())
+                        .setScore(entry.getValue())
                         .build())
                 .toList();
     }
@@ -76,7 +76,7 @@ public class RecommendationsService {
         } else {
             return interactions.stream().map(el -> RecommendedEventProto.newBuilder()
                     .setEventId((long) el[0])
-                    .setScope((double) el[1])
+                    .setScore((double) el[1])
                     .build()).toList();
         }
     }

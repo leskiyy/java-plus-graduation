@@ -20,6 +20,7 @@ public class RecommendationsController extends RecommendationsControllerGrpc.Rec
 
     @Override
     public void getRecommendationsForUser(UserPredictionsRequestProto request, StreamObserver<RecommendedEventProto> responseObserver) {
+        log.info("RecommendationsControllerGrpc invoked with method getRecommendationsForUser(), request={}", request);
         try {
             List<RecommendedEventProto> recommendations = recommendationsService.getRecommendationsForUser(request);
             recommendations.forEach(responseObserver::onNext);
@@ -37,6 +38,8 @@ public class RecommendationsController extends RecommendationsControllerGrpc.Rec
 
     @Override
     public void getSimilarEvents(SimilarEventsRequestProto request, StreamObserver<RecommendedEventProto> responseObserver) {
+        log.info("RecommendationsControllerGrpc invoked with method getSimilarEvents(), request={}", request);
+
         try {
             List<RecommendedEventProto> recommendations = recommendationsService.getSimilarEvent(request);
             recommendations.forEach(responseObserver::onNext);
@@ -55,16 +58,17 @@ public class RecommendationsController extends RecommendationsControllerGrpc.Rec
 
     @Override
     public void getInteractionsCount(InteractionsCountRequestProto request, StreamObserver<RecommendedEventProto> responseObserver) {
+        log.info("getInteractionsCount invoked with method getSimilarEvents(), request={}", request);
         List<Long> eventIdList = request.getEventIdList();
         try {
             List<RecommendedEventProto> recommendations = recommendationsService.getInteractionsCount(request);
 
-            if (recommendations == null || recommendations.isEmpty()) { // Замените на вашу реальную логику
+            if (recommendations == null || recommendations.isEmpty()) {
                 eventIdList.forEach(id -> {
                     responseObserver.onNext(
                             RecommendedEventProto.newBuilder()
                                     .setEventId(id)
-                                    .setScope(0.0)
+                                    .setScore(0.0)
                                     .build());
                 });
                 responseObserver.onCompleted();
