@@ -13,12 +13,15 @@ public interface EventSimilarityRepository extends JpaRepository<EventSimilarity
     List<EventSimilarity> findAllByEventId(Long eventId);
 
     @Query("""
-                SELECT es FROM EventSimilarity es
-                WHERE (es.id.firstEvent IN :userActionsRecentEventIds OR es.id.secondEvent IN :userActionsRecentEventIds)
-                AND es.id.firstEvent NOT IN :allUsersEvents
-                AND es.id.secondEvent NOT IN :allUsersEvents
-                ORDER BY es.score DESC
-                LIMIT :limit
+            SELECT es FROM EventSimilarity es
+            WHERE es.id.firstEvent IN :userActionsRecentEventIds
+              AND es.id.secondEvent NOT IN :allUsersEvents
+            UNION
+            SELECT es FROM EventSimilarity es \s
+            WHERE es.id.secondEvent IN :userActionsRecentEventIds
+              AND es.id.firstEvent NOT IN :allUsersEvents
+            ORDER BY score DESC
+            LIMIT :limit
             """)
     List<EventSimilarity> findSimilarEvents(List<Long> userActionsRecentEventIds, Set<Long> allUsersEvents, int limit);
 }

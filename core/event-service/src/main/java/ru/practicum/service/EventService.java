@@ -26,10 +26,7 @@ import ru.practicum.parameters.PublicSearchParam;
 import ru.practicum.repository.EventRepository;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -195,8 +192,9 @@ public class EventService {
         List<Long> ids = recommendationsForUser.stream().map(RecommendedEventProto::getEventId).toList();
 
         List<Event> events = eventRepository.findAllById(ids);
-        List<EventShortDto> eventShortDtos = events.stream().map(eventMapper::toShortDto).toList();
+        List<EventShortDto> eventShortDtos = events.stream().map(eventMapper::toShortDto).collect(Collectors.toList());
         enrichWithStatsEventShortDto(eventShortDtos);
+        eventShortDtos.sort(Comparator.comparingDouble(EventShortDto::getRating).reversed());
         return eventShortDtos;
     }
 
@@ -209,7 +207,8 @@ public class EventService {
         List<RecommendedEventProto> ratings = analyzerClient.getInteractionsCount(InteractionsCountRequestProto.newBuilder()
                 .addAllEventId(List.of(dto.getId()))
                 .build());
-        dto.setRating(ratings.getFirst() == null ? 0. : ratings.getFirst().getScore());
+        Double rating = ratings == null ? 0. : ratings.getFirst() == null ? 0. : ratings.getFirst().getScore();
+        dto.setRating(rating);
         dto.setConfirmedRequests(confirmedRequests.get(eventId));
     }
 
